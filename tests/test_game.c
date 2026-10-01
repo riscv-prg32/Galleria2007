@@ -315,7 +315,33 @@ static void test_host_without_multiplayer(void) {
     host_features |= PRG32_FEATURE_MULTIPLAYER;
 }
 
+/* Display traffic: an unchanged frame sends nothing; a moving frame sends
+ * only the 3D view (20 strips); the HUD bands are re-sent only when their
+ * content changes. Fewer pixels sent = more frames per second on the board. */
+static void test_display_traffic(void) {
+    start_game();
+    place(200, 1300, ANG_QUARTER);
+    frames(24, 0);                               /* settle: eye height, then full-res refinement */
+    int before = host_blits;
+    frames(10, 0);
+    CHECK_EQ(host_blits, before);                /* nothing changed: no blits */
+    before = host_blits;
+    frames(1, PRG32_BTN_LEFT);                   /* turning: view strips only */
+    CHECK_EQ(host_blits - before, G2007_SCREEN_W / G2007_STRIP_W);
+    frames(1, 0);                                /* stopped: one full-res frame */
+    before = host_blits;
+    frames(5, 0);
+    CHECK_EQ(host_blits, before);
+    before = host_blits;
+    ui_toast(&g_game, S_M_LOCKED, S_NONE);       /* band content changes */
+    frames(1, 0);
+    CHECK_EQ(host_blits - before, 3 * G2007_SCREEN_W / G2007_STRIP_W);
+    /* The view is clear of the bands: the blits never overlap. */
+    CHECK_EQ(G2007_VIEW_Y0 + G2007_VIEW_H <= G2007_SCREEN_H, 1);
+}
+
 int main(void) {
+    test_display_traffic();
     test_host_without_multiplayer();
     test_stereo_positioning();
     test_solo_walkthrough();

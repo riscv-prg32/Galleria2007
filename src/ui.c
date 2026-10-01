@@ -101,14 +101,15 @@ static void torch_icon(const Game *g) {
 }
 
 static void draw_play_hud(Game *g) {
-    text(4, 3, str(objective(g)), C_DIM, C_BLACK);
+    /* Top band (rows 0..15): objective, players, torch. */
+    text(4, 4, str(objective(g)), C_DIM, C_BLACK);
     torch_icon(g);
     if (g->remote_count) {
         char buf[24];
         char *p = put_str(buf, str(S_MP_PLAYERS));
         *p++ = ' ';
         put_num(p, (uint32_t)g->remote_count + 1, 1);
-        text(G2007_SCREEN_W - 8 * text_len(buf) - 4, 16, buf, C_HIST, C_BLACK);
+        text(288 - 8 * text_len(buf), 4, buf, C_HIST, C_BLACK);
     }
     if (g->wall_progress) {
         int w = (int)g->wall_progress * 120 / (4000 / G2007_TICK_MS);
@@ -124,9 +125,9 @@ static void draw_play_hud(Game *g) {
             *p++ = ' ';
             put_str(p, str(g->toast_b));
         }
-        text_center(172, buf, C_WHITE, C_BLACK);
+        text_center(178, buf, C_WHITE, C_BLACK);     /* bottom band (rows 176..199) */
     }
-    if (g->target.kind != TGT_NONE) text_center(188, str(g->target.prompt), C_ACCENT, C_BLACK);
+    if (g->target.kind != TGT_NONE) text_center(189, str(g->target.prompt), C_ACCENT, C_BLACK);
 }
 
 static void draw_inventory(Game *g) {
@@ -230,7 +231,7 @@ void ui_draw(Game *g) {
         text_center(120, str(S_MENU_ARCHIVE), g->menu == 1 ? C_ACCENT : C_DIM, C_PANEL);
         text(100, g->menu == 0 ? 106 : 120, ">", C_ACCENT, C_PANEL);
         text_center(142, str(S_TITLE_HELP), C_BORDER, C_PANEL);
-        text(296, 188, str(S_LANG), C_DIM, C_BLACK);
+        text(296, 189, str(S_LANG), C_DIM, C_BLACK);
         break;
     case GS_INTRO:
         fill(C_BLACK);

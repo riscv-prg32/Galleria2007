@@ -49,6 +49,6 @@ int main(void) {
     int32_t y_near = G2007_HORIZON - (((1300 - G2007_EYE_HEIGHT) * scale_near) >> 8);
     CHECK(y_near < -20000);
     int32_t scale_far = (G2007_FOCAL << 8) / G2007_FAR_CM;
-    CHECK_EQ(G2007_HORIZON - (((560 - G2007_EYE_HEIGHT) * scale_far) >> 8), 83);
+    CHECK_EQ(G2007_HORIZON - (((560 - G2007_EYE_HEIGHT) * scale_far) >> 8), G2007_HORIZON - 17);
     TEST_MAIN_END("test_fixed")
 }

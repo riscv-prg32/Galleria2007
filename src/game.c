@@ -722,6 +722,15 @@ void game_init(void) {
     g->player.tag = (uint16_t)prg32_random_number(1, 65535);
     new_session(g);
     g->state = GS_TITLE;
+#if G2007_TEST_SCENE
+    world_set_flags(G2007_TEST_FLAGS);
+    g->player.body.x = (G2007_TEST_X - MAP_ORIGIN_X) * 256;
+    g->player.body.y = (G2007_TEST_Y - MAP_ORIGIN_Y) * 256;
+    g->player.body.sector = (int16_t)world_find_sector(-1, g->player.body.x >> 8, g->player.body.y >> 8);
+    g->player.angle = G2007_TEST_ANGLE * ANG_FULL / 360;
+    g->player.eye_z = g_map_sectors[g->player.body.sector].floor_z + G2007_EYE_HEIGHT;
+    g->state = GS_PLAY;
+#endif
     mp_init();
     g->last_ms = prg32_ticks_ms();
 }

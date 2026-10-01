@@ -27,7 +27,7 @@ import g2007_ids as ids  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 FOCAL = 176           # must match G2007_FOCAL in src/config.h
-HORIZON = 100         # must match G2007_HORIZON
+HORIZON = 100         # rows in the reciprocal table (>= rows above/below the horizon)
 FOG_STEP_SHIFT = 6    # light tables are indexed by distance >> 6 (64 cm)
 TEX = 32
 

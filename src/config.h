@@ -27,15 +27,35 @@
 /* ---- Screen / projection ---------------------------------------------- */
 #define G2007_SCREEN_W 320
 #define G2007_SCREEN_H 200
-#define G2007_HORIZON 100      /* must match tools/build_assets.py HORIZON  */
+/* The 3D view is a 320x160 window (rows 16..175). The rows above and below
+ * are HUD bands that are sent to the display only when their content
+ * changes: the SPI transfer of the dirty area dominates the frame time on
+ * the ESP32-C6, so fewer changing pixels means more frames per second. */
+#define G2007_VIEW_Y0 16       /* first row of the 3D view                  */
+#define G2007_VIEW_H 160       /* rows of the 3D view                       */
+#define G2007_HORIZON (G2007_VIEW_Y0 + G2007_VIEW_H / 2)
 #define G2007_FOCAL 176        /* focal length in pixels (~84 deg FOV);
                                   must match tools/build_assets.py FOCAL    */
 #define G2007_STRIP_W 16       /* columns rendered per blit (16x200 bytes)  */
-#define RENDER_X_STEP 1        /* 1 = full resolution, 2 = half horizontal  */
+#ifndef RENDER_X_STEP
+#define RENDER_X_STEP 1        /* 1 = full resolution, 2 = always half horizontal */
+#endif
+#ifndef G2007_DYNAMIC_RES
+#define G2007_DYNAMIC_RES 1    /* half horizontal resolution while the camera
+                                  moves, full resolution when it is still   */
+#endif
+#ifndef G2007_FLAT_Y_STEP
+#define G2007_FLAT_Y_STEP 2    /* floor/ceiling rows shaded per pair (1 = each) */
+#endif
+#ifndef G2007_FLAT_TEX_FAR
+#define G2007_FLAT_TEX_FAR 1100 /* cm: farther floor/ceiling rows are not textured */
+#endif
 #define G2007_MAX_PORTALS 32   /* portal depth limit per screen column      */
 #define G2007_NEAR_CM 8        /* near clipping distance                    */
 #define G2007_FAR_CM 4000      /* beyond this everything is darkness        */
+#ifndef G2007_TEXTURED_FLATS
 #define G2007_TEXTURED_FLATS 1 /* 0 = shaded flat floors/ceilings (faster)  */
+#endif
 
 /* ---- Player ------------------------------------------------------------ */
 #define G2007_EYE_HEIGHT 160   /* cm above the floor                        */
@@ -69,5 +89,20 @@
 #define G2007_DEBUG_MAP 0
 #define G2007_DEBUG_AI 0
 #define G2007_DEBUG_NET 0
+
+/* ---- Test scenes (performance measurements only) -------------------------
+ * Must stay 0 in the sources. scripts/perf.sh defines them in wrapper files
+ * to boot straight into a fixed view: G2007_TEST_SCENE 1 plus G2007_TEST_X,
+ * G2007_TEST_Y (authoring cm, as in assets/map/galleria2007.json),
+ * G2007_TEST_ANGLE (degrees) and G2007_TEST_FLAGS (WF_* bits).
+ * G2007_TEST_NO_SKIP 1 renders and sends every frame even when nothing
+ * changed, to measure the cost of a full frame. The rendering knobs above
+ * can also be overridden from a wrapper. */
+#ifndef G2007_TEST_SCENE
+#define G2007_TEST_SCENE 0
+#endif
+#ifndef G2007_TEST_NO_SKIP
+#define G2007_TEST_NO_SKIP 0
+#endif
 
 #endif

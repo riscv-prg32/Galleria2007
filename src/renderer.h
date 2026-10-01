@@ -47,7 +47,7 @@ typedef struct {
  * every PRG32 host (PRG32-QT/iOS draw prg32_gfx_text8 with a reduced font).
  * Ops are collected each frame before render_frame(). */
 #define UI_MAX_OPS 64
-#define UI_TEXT_POOL 1536
+#define UI_TEXT_POOL 1024
 #define UI_TRANSPARENT 255   /* text background colour meaning "no box" */
 
 void render_ui_reset(void);
