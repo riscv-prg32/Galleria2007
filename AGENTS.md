@@ -28,7 +28,15 @@ the provisional map) as historical fact; see `docs/history.md`.
 - **No libc, no floats, no 64-bit division** (`-nostdlib`, no libgcc). Use
   `fx_muldiv`. Avoid signed left shifts of negative values (`* 256`).
 - **Colours are PRG32 system-cube indices** (0–7, 16–231). Never use 8–15 or
-  232–255; `tools/validate_assets.py` enforces it.
+  232–255; `tools/validate_assets.py` enforces it. The palette is installed
+  at init: never rely on a host's default palette.
+- **Never draw with `prg32_gfx_*` directly.** UI goes through overlay ops
+  (`render_ui_*`) composed into the strips with the embedded font; PRG32-QT
+  and PRG32-iOS have a reduced text font.
+- **Portability:** the same `.prg32` must run unchanged on the firmware,
+  QEMU, PRG32-QT and PRG32-iOS. Require only `sprites`; gate optional
+  services on `g2007_host_features()`; keep the image position independent
+  (`tools/check_relocatable.py`).
 - **Generated files** live in `src/gen/`, `audio/audio.json`,
   `assets/map/map_report.md`: edit the sources (`tools/g2007_ids.py`,
   `assets/map/galleria2007.json`, `lang/*.json`, `tools/build_*.py`), never
@@ -50,7 +58,7 @@ the provisional map) as historical fact; see `docs/history.md`.
 tests/run_tests.sh shots                 # must report 0 failures
 python3 tools/make_store_art.py          # if visuals changed
 scripts/build.sh && scripts/pack-store-bundle.sh
-scripts/qemu_preview.py --script smoke --out build/qemu-smoke
+scripts/check_hosts.sh                   # PRG32-QT, PRG32-iOS, QEMU
 ```
 
 Update `README.md` and the relevant `docs/*.md` whenever gameplay,

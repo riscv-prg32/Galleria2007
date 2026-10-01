@@ -20,11 +20,30 @@ firmware.
 | `test_ai` | every FSM transition, no stuck states, torch-dependent sight range, capture cooldown, walls block sight, chase and capture through portals, SEARCH → RETURN → PATROL |
 | `test_protocol` | bit-exact packing, monotonic world flags, malformed records, duplicate pickup convergence in both orders, stale records after a drop, version wrap, stale/duplicate frames |
 | `test_input` | single A/B taps, A+B chord in either order, no torch toggle when opening the backpack, chord needs release, hold A |
-| `test_game` (per language) | boot → title → intro → play; **complete solo playthrough** of the vertical slice using only player actions; both full-backpack swaps; torch/backpack chord; wall forcing; walking into the cavity and up the staircase; end, outro, info, replay; capture and checkpoint recovery with progress kept; multiplayer wall flag and lost simultaneous pickup |
+| `test_game` (per language) | host without multiplayer still plays solo; stereo pan direction; boot → title → intro → play; **complete solo playthrough** of the vertical slice using only player actions; both full-backpack swaps; torch/backpack chord; wall forcing; walking into the cavity and up the staircase; end, outro, info, replay; capture and checkpoint recovery with progress kept; multiplayer wall flag and lost simultaneous pickup |
 
 `tests/host/host_prg32.h` implements the PRG32 calls the cartridge uses: the
 indexed blit has the firmware's semantics and text uses the firmware font
 (copied from the PRG32 checkout at test time), so host frames match QEMU.
+
+## Other PRG32 hosts and relocatability
+
+```bash
+scripts/check_hosts.sh
+```
+
+1. `tools/check_relocatable.py`: only PC-relative relocations and none in
+   data; images linked at two load addresses are byte-identical;
+2. PRG32-QT: builds the Qt-free `prg32qt-headless` from `PRG32_QT_REPO` and
+   runs every cartridge for 300 scripted frames with media verification;
+3. PRG32-iOS: builds `tools/ios-headless` against the unmodified `PRG32Core`
+   package of `PRG32_IOS_REPO` and runs every cartridge for 300 frames;
+4. QEMU firmware smoke run for each QEMU cartridge.
+
+Last run (2026-10-01, clean clones of PRG32-QT `07aad8b` and PRG32-iOS
+`f0c1cdb`): all four cartridges passed on every host. The earlier build that
+*required* multiplayer was rejected by PRG32-iOS, which is why multiplayer is
+now optional ([portability.md](portability.md)).
 
 ## QEMU
 
@@ -40,8 +59,8 @@ firmware framebuffer through QMP `pmemsave`, records the firmware PCM stream
 and, with `--video`, encodes a 30-second MP4.
 
 Last run (2026-10-01, PRG32 QEMU firmware built 2026-09-13, ABI hash
-`0x260f6136`): the Italian cartridge loaded (`38820 bytes code, 45912 bytes memory,
-2680 bytes audio`), the English one `38632 / 45724 / 2680`, title/intro/play, walking, torch toggle, A+B backpack and
+`0x260f6136`): the Italian cartridge loaded (`40320 bytes code, 49852 bytes memory,
+2680 bytes audio`), the English one `40132 / 49664 / 2680`, title/intro/play, walking, torch toggle, A+B backpack and
 turning all worked; the 30 s preview passed `validate_cartridge_media.py`.
 
 Note: at PRG32 `main` 687251f the QEMU firmware build fails in
@@ -50,7 +69,10 @@ to this cartridge; the earlier firmware with the same ABI was used.
 
 ## Bundle validation
 
-`scripts/pack-store-bundle.sh` rebuilds each bundled cartridge with the
-CartridgeStore format module (`CARTRIDGE_STORE_REPO`, default
-`../CartridgeStore`) and checks the 64 KiB limit; without that repository it
-falls back to structural checks.
+`scripts/pack-store-bundle.sh` runs `tools/validate_bundle.py`, which feeds
+each bundle to CartridgeStore's own `_prepare_bundle()` (the code behind
+`POST /api/publish/bundle`) when the Store repository and its Python
+requirements are available (`CARTRIDGE_STORE_REPO`, `STORE_PYTHON`), then
+checks the manifest ABI, images, architectures and the 64 KiB limit of the
+rebuilt images. Without the Store's requirements it uses the Store's format
+module, and without the repository only structural checks.

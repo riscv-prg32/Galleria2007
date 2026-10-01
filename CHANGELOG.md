@@ -14,3 +14,10 @@
 - Original adaptive stereo soundtrack and positional stereo effects on SID-like
   procedural instruments.
 - Host unit and gameplay tests (full solo walkthrough), QEMU runner.
+- Portability: one unchanged `.prg32` runs on the ESP32-C6/QEMU firmware,
+  PRG32-QT and PRG32-iOS — position independence proven on every build,
+  only `sprites` required (multiplayer/audio optional, gated at run time),
+  host-independent palette, UI composed with an embedded font.
+- Store bundles in the format accepted by CartridgeStore (`prg32-metadata-1.0`
+  manifest, `splash` screenshot), validated with its ingestion code and
+  reproducible; reproduction, replication, portability and publishing guides.

@@ -13,10 +13,12 @@ scripted QEMU previews and a validated Store bundle.
 | The builder compiles **one** source file | `src/galleria2007.c` `#include`s every module (unity build) |
 | Portable ABI-table cartridges, **no relocations** | no pointers in initialised static data: strings are one `char` array plus `uint16_t` offsets, sprite descriptors are filled in code |
 | `-nostdlib`, no libgcc | integer/fixed-point maths only, no 64-bit division, own `memset`/`memcpy` |
-| 64 KiB executable RAM (default profile) | code + data + bss = 45.9 KB |
-| 64 KiB stored package | code + AUD0 + Store trailer = 51.7 KB |
-| ~54.5 KB QEMU load image (header + code/data + audio) | ~41.6 KB |
-| ILI9341 indexed framebuffer maps colours to a 6×6×6 cube | all art uses system-cube indices (see [renderer.md](renderer.md#colour)) |
+| 64 KiB executable RAM (default profile) | code + data + bss = 49.9 KB |
+| 64 KiB stored package | code + AUD0 + Store trailer = 53.2 KB |
+| ~54.5 KB QEMU load image (header + code/data + audio) | ~43.1 KB |
+| Hosts differ in default palette and font (firmware cube vs PRG32-QT RGB332; 5×7 font on QT/iOS) | the cartridge installs its palette and composes all text with its own font ([portability.md](portability.md)) |
+| PRG32-iOS offers no multiplayer | only `sprites` is required; multiplayer/audio are optional and gated at run time |
+| Same image at any load address | `tools/check_relocatable.py` proves position independence on every build |
 | Multiplayer snapshot = `x, y, sprite, flags, input(7 bits)` | state-gossip protocol ([multiplayer.md](multiplayer.md)) |
 | Tracker: channel N plays instrument N; 6 mono voices | music on voices 0–3, effects on 4–5 ([audio.md](audio.md)) |
 
@@ -37,8 +39,9 @@ src/
   renderer.[ch]    portal raycaster, flats, billboards, strip blits
   audio.[ch]       adaptive music state machine and sound effects
   ui.c             HUD, backpack/archive, read panel, title/end screens
+                   (overlay ops composed by the renderer, own font)
   game.[ch]        game state machine, player, interaction, puzzle, triggers
-  platform.h       the only include of prg32.h
+  platform.h       the only include of prg32.h; host feature query
   gen/             generated headers (never edit by hand)
 lang/              it.json (primary), en.json — UI and Archive text
 assets/map/        galleria2007.json (map source), map_report.md, map_debug.png
@@ -63,6 +66,7 @@ no PRG32 dependency and are unit-tested on the host.
 | `tools/build_assets.py` | `src/gen/assets_data.h`, `src/gen/trig_table.h`, texture/sprite sheets | procedural code (no photos) |
 | `tools/build_strings.py` | `src/gen/string_ids.h`, `src/gen/strings_<lang>.h` | `lang/*.json` |
 | `tools/build_audio.py` | `audio/audio.json`, `src/gen/audio_ids.h` | note lists in the script |
+| `tools/build_font.py` | `src/gen/font8.h` | PRG32 firmware 8×8 font (MIT) |
 | `tools/make_store_art.py` | `assets/store/icon.png`, `screenshot-<lang>.png` | sprite data + host render |
 
 All generators are deterministic (fixed seeds); `scripts/build.sh` re-runs
@@ -75,10 +79,10 @@ galleria2007_update()                     galleria2007_draw()
   input_update()  (once per frame)          build SpriteRef list (items, marks,
   while accumulated >= 33 ms:                 vehicles, remote players, LampMan,
     tick(): state machine                     lamp glows, dust)
-      GS_PLAY: player, target query,        render_frame(): 20 strips of 16x200
-               interaction, wall forcing,     -> prg32_sprite_draw_indexed()
-               triggers                     ui_draw(): HUD / panels with
-      every state in a session:               prg32_gfx_text8 and rect_indexed
+      GS_PLAY: player, target query,        ui_draw(): HUD / panels as overlay ops
+               interaction, wall forcing,   render_frame(): 20 strips of 16x200:
+               triggers                       scene + sprites + overlay ops
+      every state in a session:               -> prg32_sprite_draw_indexed()
                LampMan, multiplayer,
                reconcile backpack, particles
       choose_music()
@@ -105,22 +109,20 @@ From `riscv32-esp-elf-size`/`nm` on the cartridge object (`-Os`):
 
 | Item | Bytes |
 |---|---:|
-| code (`.text`, all modules, plus ABI stubs at link) | 22,444 |
-| read-only data (`.rodata`) | 13,772 |
+| code (`.text`) | 23,178 |
+| read-only data (`.rodata`) | 14,532 |
 | — texture patterns (8 × 32×32 × 4 bpp) | 4,096 |
 | — Italian text table | 3,330 |
 | — sprite pixels | 1,784 |
 | — map walls / sectors / entities / vertices | 1,752 + 372 + 448 + 332 |
+| — embedded 8×8 font | 760 |
 | — quarter-wave sine table | 514 |
-| zero-initialised data (`.bss`) | 7,092 |
+| zero-initialised data (`.bss`) | 9,532 |
 | — strip buffer (16 × 200) | 3,200 |
+| — UI overlay ops + text pool | 768 + 1,536 |
 | — visible-sprite list | 1,408 |
 | — z-buffer, RGB565 palette | 640 + 512 |
-| — sprite references, game state, world, AI, input | ~1,330 |
-| **mem (linked: code + data + bss)** | **45,912 / 65,536** |
-| **package (with audio and Store trailer)** | **51,747 / 65,536** |
-| **QEMU load image (header + code + audio)** | **~41,630 / ~54,500** |
-
-The largest functions are `game_update` (the inlined tick and state
-machine, 5.2 KB), `ui_draw` (2.9 KB) and `render_frame` (2.4 KB, the whole
-renderer inlined).
+| — sprite references, game state, world, AI, input | ~1,470 |
+| **mem (linked: code + data + bss)** | **49,852 / 65,536** |
+| **package (with audio and Store trailer)** | **53,247 / 65,536** |
+| **QEMU load image (header + code + audio)** | **~43,130 / ~54,500** |

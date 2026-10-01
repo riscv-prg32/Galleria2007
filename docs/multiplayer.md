@@ -7,7 +7,10 @@ no player-versus-player damage.
 
 ## What PRG32 provides
 
-`prg32_multiplayer_join("galleria2007-v1", PRG32_MP_FLAG_ENABLE)` opts in. On
+`prg32_multiplayer_join("galleria2007-v1", PRG32_MP_FLAG_ENABLE)` opts in.
+Multiplayer is an **optional** feature of the cartridge: the game joins only
+when the host advertises `PRG32_FEATURE_MULTIPLAYER` (the ESP32-C6 and QEMU
+firmware and PRG32-QT do; PRG32-iOS does not and runs the full solo game). On
 the ESP32-C6 the firmware relays, about every 50 ms, each player's latest
 snapshot through the PRG32 MultiplayerServer:
 

@@ -9,6 +9,9 @@ approves the authenticated publication.**
 - [x] Portable ABI-table build only, no legacy absolute imports (ABI hash `0x260f6136`)
 - [x] Uses current PRG32 public headers (`main` 687251f) and the 64 KiB profile
 - [x] `cartridge summary` and `store inspect-metadata` pass (`build/*.summary.txt`, `*.metadata.txt`)
+- [x] Position independent: no absolute/data relocations, identical images at two load addresses
+- [x] Runs unchanged on PRG32-QT and PRG32-iOS cores and the QEMU firmware (`scripts/check_hosts.sh`)
+- [x] Only `sprites` required; multiplayer/audio optional; palette and font host-independent
 
 ## Gameplay (host walkthrough test + QEMU smoke run)
 
@@ -46,7 +49,7 @@ approves the authenticated publication.**
 ## Store
 
 - [x] `esp32c6` and `qemu` variants per language; metadata; colophon; icon; real screenshot; 30 s QEMU preview
-- [x] Bundles validated by the CartridgeStore format module; no credentials in the repository
+- [x] Bundles accepted by the CartridgeStore's own ingestion code (`READY for submission`); reproducible checksums; no credentials in the repository
 - [ ] PENDING: human approval before authenticated publication
 
 ---

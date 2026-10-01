@@ -97,9 +97,10 @@ drawn.
 
 ## Strips and blits
 
-The view is rendered column-major into a 16×200 byte strip (3,200 bytes) and
-blitted with `prg32_sprite_draw_indexed()` as an 8-bpp sprite: 20 blits per
-frame. `RENDER_X_STEP 2` renders every other column and duplicates it.
+The view is rendered column-major into a 16×200 byte strip (3,200 bytes),
+the billboards and UI overlay are composed into it, and it is blitted with
+`prg32_sprite_draw_indexed()` as an 8-bpp sprite: 20 blits per frame and no
+other drawing calls. `RENDER_X_STEP 2` renders every other column and duplicates it.
 
 ## Colour
 
@@ -119,10 +120,20 @@ Consequently:
   `tools/build_assets.py`, which keeps channel order (tuff stays warm, water
   cool) and keeps lime and stone neutral.
 
-A fully custom 256-colour palette (`prg32_palette_set`) is not used because
-the firmware's indexed-sprite blit maps colours through the fixed cube; it
-is a possible future upgrade if the firmware gains an identity blit for
-custom palettes.
+Hosts do not share a default palette (PRG32-QT starts from RGB332), so at
+init the cartridge installs exactly these 224 colours with
+`prg32_palette_set` (entries 0–7 and 16–231). The values stay on the cube, so
+the firmware's cube mapping keeps working, and emulator hosts that pick the
+nearest palette entry find an exact match. See [portability.md](portability.md#3-palette).
+
+## UI overlay
+
+The HUD, panels and menus are not drawn with host calls. `ui_draw()` emits
+overlay operations (filled rectangles and text runs, plus an optional
+full-screen fill that skips the 3D scene); `render_frame()` composes them
+into each strip after the scene and the billboards, using the PRG32 firmware
+8×8 font embedded in the cartridge. Text therefore looks the same on every
+host, and the frame costs only the 20 strip blits.
 
 ## Textures
 

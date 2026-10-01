@@ -30,7 +30,8 @@ compiler flags.
 
 1. checks every language has exactly the reference keys;
 2. transliterates accented letters the traditional all-caps Italian way
-   (`È` → `E'`), because the PRG32 8×8 font is ASCII-only;
+   (`È` → `E'`), because the PRG32 8×8 font (embedded in the cartridge, so
+   apostrophes and brackets render on every host) is ASCII-only;
 3. rejects non-ASCII characters, lines longer than 38 columns, and Archive
    bodies outside 2–5 lines;
 4. writes `src/gen/strings_<lang>.h`: one `char` array plus `uint16_t`

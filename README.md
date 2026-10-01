@@ -45,20 +45,23 @@ opened to the public.
 | Build (IT/EN × ESP32-C6/QEMU) | done — `scripts/build.sh` |
 | Host tests (unit + full solo walkthrough, both languages) | passing — `tests/run_tests.sh` |
 | QEMU boot, input, render, audio | verified on PRG32 QEMU firmware |
-| Store metadata, colophon, icon, screenshot, 30 s preview, bundles | done; bundles validated by the CartridgeStore format module |
+| Same `.prg32` on PRG32-QT and PRG32-iOS | verified on both emulator cores (`scripts/check_hosts.sh`); position independence proven on every build |
+| Store metadata, colophon, icon, screenshot, 30 s preview, bundles | done; both bundles accepted by the Store's own ingestion code — ready for submission |
 | Physical ESP32-C6 performance, multiplayer on boards | **pending hardware** — see [docs/acceptance.md](docs/acceptance.md) |
 | Galleria Borbonica validation of map/texts/branding | **pending partner** — see [docs/provisional.md](docs/provisional.md) |
 
-Do not publish to the Store before the hardware acceptance in
-[docs/acceptance.md](docs/acceptance.md) passes and a human approves.
+The bundles in `dist/` are ready for submission; publishing is a human,
+authenticated step described in [docs/store_publishing.md](docs/store_publishing.md).
+The ESP32-C6 hardware checks in [docs/acceptance.md](docs/acceptance.md) are
+still pending and should be completed before or right after submission.
 
 ## Budgets (measured, Italian edition)
 
 | Limit | Used | Limit |
 |---|---:|---:|
-| Executable cartridge RAM (code + data + bss) | 45,912 B | 65,536 B (PRG32 default 64 KiB profile) |
-| Stored package (code + audio + Store trailer) | 51,747 B | 65,536 B |
-| QEMU load image (header + code/data + audio) | ~41,630 B | ~54,500 B (measured by Cockroaches_Cathisteria) |
+| Executable cartridge RAM (code + data + bss) | 49,852 B | 65,536 B (PRG32 default 64 KiB profile) |
+| Stored package (code + audio + Store trailer) | 53,247 B | 65,536 B |
+| QEMU load image (header + code/data + audio) | ~43,130 B | ~54,500 B (measured by Cockroaches_Cathisteria) |
 
 ## Build
 
@@ -71,7 +74,8 @@ firmware (`python3 -m prg32 qemu build` in the PRG32 checkout).
 source ~/esp-idf/export.sh
 tests/run_tests.sh shots          # host tests + screenshots in build/shots/
 scripts/build.sh                  # dist/galleria2007-{it,en}-{esp32c6,qemu}.prg32
-scripts/pack-store-bundle.sh      # dist/galleria2007-{it,en}-0.1.0-store.zip
+scripts/pack-store-bundle.sh      # dist/galleria2007-{it,en}-0.1.0-store.zip (Store-validated)
+scripts/check_hosts.sh            # run them on PRG32-QT, PRG32-iOS and QEMU
 ```
 
 Build only one edition or target with `LANGS="en" scripts/build.sh qemu`.
@@ -103,8 +107,14 @@ scripts/qemu_preview.py --script preview --video --out build/qemu-preview
 
 ## Documentation
 
+Start at [docs/index.md](docs/index.md).
+
 | Document | Contents |
 |---|---|
+| [docs/reproduce.md](docs/reproduce.md) | rebuild the released artefacts exactly, with versions and expected outputs |
+| [docs/replicate.md](docs/replicate.md) | build your own cartridge on this engine |
+| [docs/portability.md](docs/portability.md) | one unchanged `.prg32` on the firmware, QEMU, PRG32-QT and PRG32-iOS |
+| [docs/store_publishing.md](docs/store_publishing.md) | bundle format, validation, submission |
 | [docs/architecture.md](docs/architecture.md) | modules, game loop, state machines, memory budget |
 | [docs/renderer.md](docs/renderer.md) | portal raycaster maths, fixed-point formats, lighting, palette |
 | [docs/gameplay.md](docs/gameplay.md) | controls, backpack, puzzle, LampMan, narrative beats |
