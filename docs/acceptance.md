@@ -7,7 +7,7 @@ approves the authenticated publication.**
 ## Build
 
 - [x] Portable ABI-table build only, no legacy absolute imports (ABI hash `0x260f6136`)
-- [x] Uses current PRG32 public headers (`main` 687251f) and the 64 KiB profile
+- [x] Uses current PRG32 public headers (`main` a8669e5) and the 64 KiB profile
 - [x] `cartridge summary` and `store inspect-metadata` pass (`build/*.summary.txt`, `*.metadata.txt`)
 - [x] Position independent: no absolute/data relocations, identical images at two load addresses
 - [x] Runs unchanged on PRG32-QT and PRG32-iOS cores and the QEMU firmware (`scripts/check_hosts.sh`)
@@ -24,7 +24,8 @@ approves the authenticated publication.**
 
 - [x] 320×200 output, indexed-colour compatible, textured walls/flats, portals, height differences
 - [x] Billboards, torch shading, distance darkness
-- [ ] PENDING: acceptable frame rate on a physical ESP32-C6 (estimate ~18 fps, [performance.md](performance.md))
+- [x] Frame cost reduced: ≈7 ms of cartridge compute per moving frame on the 160 MHz model (was ≈31 ms), 20 % fewer pixels sent, nothing sent when nothing changes
+- [ ] PENDING: frame rate on a physical ESP32-C6 (estimate ≈23 fps while moving, [performance.md](performance.md))
 
 ## Multiplayer
 

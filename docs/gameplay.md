@@ -17,6 +17,14 @@ other. Both inside the window fire **only** A+B; a single press fires when
 released or when the window expires. The chord needs a full release before it
 can fire again, so opening the backpack never toggles the torch.
 
+## Screen layout
+
+The first-person view is a 320×160 window. A band above it shows the current
+objective, the number of explorers and the torch icon; a band below it shows
+transient messages and the interaction prompt. Panels (backpack, Archive,
+texts) open over the view. Keeping the HUD out of the view lets the display
+update only what changed, which is what makes the game fluid on the board.
+
 ## Interaction
 
 The target is the best candidate within reach (170 cm, 230 cm with the

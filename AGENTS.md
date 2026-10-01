@@ -41,6 +41,13 @@ the provisional map) as historical fact; see `docs/history.md`.
   `assets/map/map_report.md`: edit the sources (`tools/g2007_ids.py`,
   `assets/map/galleria2007.json`, `lang/*.json`, `tools/build_*.py`), never
   the outputs.
+- **Frame rate is about pixels sent.** The SPI transfer of the changed area
+  dominates on the ESP32-C6: keep the HUD in the bands, never redraw what
+  did not change, keep per-pixel loops free of multiplies and divisions, and
+  compare `scripts/perf.sh` before and after rendering changes
+  (`docs/performance.md`).
+- **Test switches** (`G2007_TEST_*`) stay 0 in the sources; set them only in
+  wrapper files (`scripts/perf.sh` does).
 - **Budgets** (checked by `scripts/build.sh`): executable RAM ≤ 65,536
   (`mem=`), stored package ≤ 65,536, QEMU load image (code + audio + header)
   ≤ ~54,500.
@@ -59,6 +66,7 @@ tests/run_tests.sh shots                 # must report 0 failures
 python3 tools/make_store_art.py          # if visuals changed
 scripts/build.sh && scripts/pack-store-bundle.sh
 scripts/check_hosts.sh                   # PRG32-QT, PRG32-iOS, QEMU
+scripts/perf.sh                          # after rendering changes
 ```
 
 Update `README.md` and the relevant `docs/*.md` whenever gameplay,

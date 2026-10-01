@@ -27,18 +27,24 @@ R    = forward + plane * camx               (forward has length 1.0 = 4096)
 so the length of `R` along the view axis is exactly 1 and every distance
 below is already **perpendicular** (no fish-eye correction).
 
-Starting in the camera's sector with the clip window `[ytop, ybot] = [0,199]`:
+The 3D view is a 320×160 window (rows 16–175); the horizon is its middle
+row (96). Starting in the camera's sector with the clip window
+`[ytop, ybot] = [16, 175]`:
 
 1. **Exit wall without division.** For a convex counter-clockwise polygon,
    the ray leaves through the unique edge A→B with `side(A) < 0 ≤ side(B)`,
    where `side(V) = cross(R, V - P)`. Only multiplications and sign tests.
+   The wall found by the previous column at the same portal depth is tested
+   first: neighbouring rays almost always share it, so the scan of the whole
+   sector is usually skipped.
 2. **Distance.** With `D = A - P`, `E = B - A`:
-   `d = cross(D, E) * 4096 / cross(R, E)` — computed by `fx_muldiv` (64-bit
-   product, hardware divide when it fits, exact shift-subtract otherwise).
+   `d = cross(D, E) * 4096 / cross(R, E)`. `ray_distance()` shifts the
+   numerator left as far as it fits and the denominator right by the
+   remaining bits, so a single hardware divide replaces a 64-bit division.
 3. **Texture u.** Hit `H = P + R·d/4096`; distance along the wall from its
    dominant axis times a per-wall factor `ulen_q8 = |E| / max(|Ex|,|Ey|)`.
 4. **Projection.** `scale = (FOCAL << 8) / d`; a height `z` maps to
-   `y = 100 - ((z - eye) * scale >> 8)`.
+   `y = 96 - ((z - eye) * scale >> 8)`.
 5. **Draw** the sector's ceiling rows above its ceiling line and floor rows
    below its floor line, then either the solid wall (stop) or, through a
    portal, the *upper step* (if the neighbour's ceiling is lower) and the
@@ -55,15 +61,24 @@ height 0 so textures line up across steps:
 
 ```text
 vstep = (d << 14) / FOCAL
-v(y)  = -eye * 16384 + (y - 100) * vstep
+v(y)  = -eye * 16384 + (y - 96) * vstep
 ```
+
+Texture column, material and brightness are constant along a span, so each
+pixel is one texel fetch and one lookup in the pre-shaded table; rows are
+drawn two per iteration (one per dither phase), and magnified walls share a
+single texel fetch per row pair.
 
 ### Floors and ceilings
 
 A flat pixel's distance depends only on its row and the height difference:
-`dist = hdiff * FOCAL / |y - 100|`, read from a 101-entry reciprocal table.
-The world position is `P + R·dist/4096` (two multiplies), so floors are fully
-textured. `G2007_TEXTURED_FLATS 0` replaces them with shaded fills.
+`dist = hdiff * FOCAL / |y - 96|`, read from a reciprocal table. The world
+position is `P + R·dist/4096` (two multiplies), so floors are textured. Rows
+are shaded in pairs (`G2007_FLAT_Y_STEP`): distance, light and texel are
+computed once and written with each row's own dither phase. Beyond
+`G2007_FLAT_TEX_FAR` a texel is smaller than a pixel and the pattern's mean
+luminance is used. `G2007_TEXTURED_FLATS 0` replaces textures with shaded
+fills.
 
 ## Lighting
 
@@ -75,9 +90,12 @@ L = (sector_light * fog[d >> 6] + band(x) * flash[d >> 6]) >> 4
 ```
 
 `band(x)` is the torch beam: four discrete bands around the screen centre
-(13/9/4/1, +3 with the battery boost). A texel of luminance `lum ∈ [0,15]`
-becomes `ramp[material][(lum * L + bayer(x, y)) >> 4]` — one multiply and one
-lookup per pixel, with a 2×2 ordered dither. With the torch off, ambient
+(13/9/4/1, +3 with the battery boost). The two products are precomputed
+tables (`g_amb`, `g_torch`) indexed by distance bin. A texel of luminance
+`lum ∈ [0,15]` becomes `ramp[material][(lum * L + bayer(x, y)) >> 4]` with a
+2×2 ordered dither; that whole expression is tabulated at init in
+`g_shade[material][L/2][phase][lum]` (4.6 KB), so shading a pixel is a single
+lookup. With the torch off, ambient
 light keeps silhouettes readable; with it on, the beam reveals texture and
 clues and makes the player visible to LampMan.
 
@@ -98,9 +116,24 @@ drawn.
 ## Strips and blits
 
 The view is rendered column-major into a 16×200 byte strip (3,200 bytes),
-the billboards and UI overlay are composed into it, and it is blitted with
-`prg32_sprite_draw_indexed()` as an 8-bpp sprite: 20 blits per frame and no
-other drawing calls. `RENDER_X_STEP 2` renders every other column and duplicates it.
+the billboards and UI overlay are composed into it, and its 160 view rows are
+blitted with `prg32_sprite_draw_indexed()` as an 8-bpp sprite: 20 blits per
+frame and no other drawing calls.
+
+## Sending and rendering only what changed
+
+The firmware transfers the bounding box of what was drawn, so:
+
+- the HUD bands above and below the view (rows 0–15 and 176–199) are blitted
+  only when a hash of their overlay ops changes;
+- a frame whose camera, sprites, door flags and overlay are unchanged is not
+  rendered or blitted at all, and static full-screen pages are sent once;
+- with `G2007_DYNAMIC_RES`, while the camera moves each ray fills two columns
+  (duplicated four pixels at a time with word operations) and the first
+  still frame is refined to full resolution. `RENDER_X_STEP 2` forces half
+  resolution always.
+
+Measurements and the frame-time model are in [performance.md](performance.md).
 
 ## Colour
 

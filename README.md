@@ -10,7 +10,7 @@ opened to the public.
 > Lamp Man), his traces and the puzzle mechanics are game fiction, and the
 > map is a provisional topological reconstruction — **not a survey**.
 
-![Gameplay in the vehicle deposit, torch on (actual host render of the cartridge code)](assets/store/screenshot-it.png)
+![Gameplay in the vehicle deposit, torch on (actual host render of the cartridge code; the 3D view is 320×160 with HUD bands above and below)](assets/store/screenshot-it.png)
 
 [30-second QEMU gameplay preview with the game's own audio](assets/store/preview-it.mp4)
 
@@ -47,6 +47,7 @@ opened to the public.
 | QEMU boot, input, render, audio | verified on PRG32 QEMU firmware |
 | Same `.prg32` on PRG32-QT and PRG32-iOS | verified on both emulator cores (`scripts/check_hosts.sh`); position independence proven on every build |
 | Store metadata, colophon, icon, screenshot, 30 s preview, bundles | done; both bundles accepted by the Store's own ingestion code — ready for submission |
+| Frame rate | cartridge compute cut from ≈31 ms to ≈7 ms per moving frame (modelled); ≈23 fps estimated on the board, up from ≈13 — [docs/performance.md](docs/performance.md) |
 | Physical ESP32-C6 performance, multiplayer on boards | **pending hardware** — see [docs/acceptance.md](docs/acceptance.md) |
 | Galleria Borbonica validation of map/texts/branding | **pending partner** — see [docs/provisional.md](docs/provisional.md) |
 
@@ -59,9 +60,9 @@ still pending and should be completed before or right after submission.
 
 | Limit | Used | Limit |
 |---|---:|---:|
-| Executable cartridge RAM (code + data + bss) | 49,852 B | 65,536 B (PRG32 default 64 KiB profile) |
-| Stored package (code + audio + Store trailer) | 53,247 B | 65,536 B |
-| QEMU load image (header + code/data + audio) | ~43,130 B | ~54,500 B (measured by Cockroaches_Cathisteria) |
+| Executable cartridge RAM (code + data + bss) | 57,756 B | 65,536 B (PRG32 default 64 KiB profile) |
+| Stored package (code + audio + Store trailer) | 54,893 B | 65,536 B |
+| QEMU load image (header + code/data + audio) | ~45,110 B | ~54,500 B (measured by Cockroaches_Cathisteria) |
 
 ## Build
 
@@ -76,6 +77,7 @@ tests/run_tests.sh shots          # host tests + screenshots in build/shots/
 scripts/build.sh                  # dist/galleria2007-{it,en}-{esp32c6,qemu}.prg32
 scripts/pack-store-bundle.sh      # dist/galleria2007-{it,en}-0.1.0-store.zip (Store-validated)
 scripts/check_hosts.sh            # run them on PRG32-QT, PRG32-iOS and QEMU
+scripts/perf.sh                   # per-frame cost table (PRG32-QT ESP32-C6 model)
 ```
 
 Build only one edition or target with `LANGS="en" scripts/build.sh qemu`.

@@ -18,6 +18,12 @@
   PRG32-QT and PRG32-iOS — position independence proven on every build,
   only `sprites` required (multiplayer/audio optional, gated at run time),
   host-independent palette, UI composed with an embedded font.
+- Frame rate: 320×160 view with HUD bands sent only when they change,
+  unchanged frames not re-sent, dynamic half resolution while moving,
+  pre-shaded lookup tables, cheaper walls/floors/sprites and sector
+  traversal. Cartridge compute per moving frame ≈31 ms → ≈7 ms on the
+  160 MHz model; ≈23 fps estimated on the board (was ≈13).
+  `scripts/perf.sh` measures it.
 - Store bundles in the format accepted by CartridgeStore (`prg32-metadata-1.0`
   manifest, `splash` screenshot), validated with its ingestion code and
   reproducible; reproduction, replication, portability and publishing guides.

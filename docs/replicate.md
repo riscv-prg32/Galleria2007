@@ -25,7 +25,10 @@ firmware, PRG32-QT and PRG32-iOS ([portability.md](portability.md)):
    optional and test `__prg32_abi->provided_features` at run time.
 6. **Do not rely on host defaults** that differ: install the palette you use
    with `prg32_palette_set`, and draw text with your own font.
-7. **Budgets:** ≤ 64 KiB executable RAM (code + data + bss), ≤ 64 KiB stored
+7. **Send few pixels.** The SPI transfer of the changed area dominates the
+   frame on the board: redraw only what changed and keep per-pixel loops to
+   table lookups ([performance.md](performance.md)).
+8. **Budgets:** ≤ 64 KiB executable RAM (code + data + bss), ≤ 64 KiB stored
    package, and ≈ 54.5 KB QEMU load image (header + code/data + audio).
 
 ## 1. Project skeleton
@@ -172,6 +175,7 @@ Run `tests/run_tests.sh shots` after every change.
 4. `scripts/pack-store-bundle.sh` → `dist/*-store.zip`, validated by the
    Store's own ingestion code;
 5. `scripts/check_hosts.sh` → runs the cartridges on every host;
+   `scripts/perf.sh` → per-frame cost in fixed scenes ([performance.md](performance.md));
 6. publish by hand: [store_publishing.md](store_publishing.md).
 
 ## 13. Checklist for a derived project

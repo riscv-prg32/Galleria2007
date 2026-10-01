@@ -13,9 +13,10 @@ scripted QEMU previews and a validated Store bundle.
 | The builder compiles **one** source file | `src/galleria2007.c` `#include`s every module (unity build) |
 | Portable ABI-table cartridges, **no relocations** | no pointers in initialised static data: strings are one `char` array plus `uint16_t` offsets, sprite descriptors are filled in code |
 | `-nostdlib`, no libgcc | integer/fixed-point maths only, no 64-bit division, own `memset`/`memcpy` |
-| 64 KiB executable RAM (default profile) | code + data + bss = 49.9 KB |
-| 64 KiB stored package | code + AUD0 + Store trailer = 53.2 KB |
-| ~54.5 KB QEMU load image (header + code/data + audio) | ~43.1 KB |
+| 64 KiB executable RAM (default profile) | code + data + bss = 57.8 KB |
+| 64 KiB stored package | code + AUD0 + Store trailer = 54.9 KB |
+| ~54.5 KB QEMU load image (header + code/data + audio) | ~45.1 KB |
+| SPI transfer of the changed area dominates the frame | 320×160 view, HUD bands and unchanged frames are not re-sent ([performance.md](performance.md)) |
 | Hosts differ in default palette and font (firmware cube vs PRG32-QT RGB332; 5×7 font on QT/iOS) | the cartridge installs its palette and composes all text with its own font ([portability.md](portability.md)) |
 | PRG32-iOS offers no multiplayer | only `sprites` is required; multiplayer/audio are optional and gated at run time |
 | Same image at any load address | `tools/check_relocatable.py` proves position independence on every build |
@@ -49,9 +50,11 @@ assets/source/     SOURCES.md (rights manifest)
 assets/store/      icon, per-language screenshots, preview video
 audio/audio.json   generated AUD0 source (tools/build_audio.py)
 metadata/          metadata.<lang>.json, colophon.<lang>.json
-tools/             deterministic generators and validators
+tools/             deterministic generators and validators; qt-perf/ and
+                   ios-headless/ host runners
 tests/             host unit tests, gameplay tests, host PRG32 implementation
-scripts/           build.sh, pack-store-bundle.sh, qemu_preview.py
+scripts/           build.sh, pack-store-bundle.sh, check_hosts.sh, perf.sh,
+                   qemu_preview.py
 ```
 
 Pure modules (`fixed`, `world`, `inventory`, `ai`, `net_proto`, `input`) have
@@ -80,9 +83,9 @@ galleria2007_update()                     galleria2007_draw()
   while accumulated >= 33 ms:                 vehicles, remote players, LampMan,
     tick(): state machine                     lamp glows, dust)
       GS_PLAY: player, target query,        ui_draw(): HUD / panels as overlay ops
-               interaction, wall forcing,   render_frame(): 20 strips of 16x200:
-               triggers                       scene + sprites + overlay ops
-      every state in a session:               -> prg32_sprite_draw_indexed()
+               interaction, wall forcing,   render_frame(): nothing if unchanged,
+               triggers                       else 20 strips: scene + sprites +
+      every state in a session:               overlay -> prg32_sprite_draw_indexed()
                LampMan, multiplayer,
                reconcile backpack, particles
       choose_music()
@@ -109,20 +112,25 @@ From `riscv32-esp-elf-size`/`nm` on the cartridge object (`-Os`):
 
 | Item | Bytes |
 |---|---:|
-| code (`.text`) | 23,178 |
-| read-only data (`.rodata`) | 14,532 |
+| code (`.text`) | 25,156 |
+| read-only data (`.rodata`) | 14,540 |
 | — texture patterns (8 × 32×32 × 4 bpp) | 4,096 |
 | — Italian text table | 3,330 |
 | — sprite pixels | 1,784 |
 | — map walls / sectors / entities / vertices | 1,752 + 372 + 448 + 332 |
 | — embedded 8×8 font | 760 |
 | — quarter-wave sine table | 514 |
-| zero-initialised data (`.bss`) | 9,532 |
+| zero-initialised data (`.bss`) | 15,452 |
+| — pre-shaded colour table `g_shade` | 4,608 |
 | — strip buffer (16 × 200) | 3,200 |
-| — UI overlay ops + text pool | 768 + 1,536 |
+| — light tables (ambient, torch) | 1,088 + 512 |
+| — UI overlay ops + text pool | 896 + 1,024 |
 | — visible-sprite list | 1,408 |
-| — z-buffer, RGB565 palette | 640 + 512 |
-| — sprite references, game state, world, AI, input | ~1,470 |
-| **mem (linked: code + data + bss)** | **49,852 / 65,536** |
-| **package (with audio and Store trailer)** | **53,247 / 65,536** |
-| **QEMU load image (header + code + audio)** | **~43,130 / ~54,500** |
+| — z-buffer, RGB565 palette, sprite references | 640 + 512 + 640 |
+| — game state, world, AI, input, caches | ~920 |
+| **mem (linked: code + data + bss)** | **57,756 / 65,536** |
+| **package (with audio and Store trailer)** | **54,893 / 65,536** |
+| **QEMU load image (header + code + audio)** | **~45,110 / ~54,500** |
+
+The 6 KB spent on shading and light tables buys the frame rate described in
+[performance.md](performance.md).

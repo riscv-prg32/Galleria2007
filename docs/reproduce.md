@@ -14,7 +14,7 @@ If you want to *adapt* the project into a new cartridge instead, read
 | Component | Version used for release 0.1.0 | Notes |
 |---|---|---|
 | OS | macOS 26 (Apple Silicon) | Linux works for everything except the iOS runner |
-| PRG32 | `riscv-prg32/PRG32` `main` @ `687251f` | cartridge builder, ABI headers, Store tools |
+| PRG32 | `riscv-prg32/PRG32` `main` @ `a8669e5` | cartridge builder, ABI headers, Store tools (`687251f` produces identical bytes) |
 | ESP-IDF | v5.4 | provides the toolchain |
 | RISC-V toolchain | `riscv32-esp-elf-gcc` esp-14.2.0_20241119 (GCC 14.2.0) | compiler version changes code bytes |
 | Espressif QEMU | `qemu-riscv32` esp_develop_9.0.0_20240606 | QEMU runs only |
@@ -23,7 +23,7 @@ If you want to *adapt* the project into a new cartridge instead, read
 | CMake + Ninja | 3.21+ | PRG32-QT headless runner only |
 | Swift | 6.x (Xcode command-line tools) | PRG32-iOS headless runner only |
 | CartridgeStore | `riscv-prg32/CartridgeStore` @ `212e060` | bundle validation only |
-| PRG32-QT | `riscv-prg32/PRG32-QT` 0.3.3 (`07aad8b`) | host compatibility check |
+| PRG32-QT | `riscv-prg32/PRG32-QT` @ `d2f139b` | host compatibility check, performance model |
 | PRG32-iOS | `riscv-prg32/PRG32-iOS` @ `f0c1cdb` | host compatibility check |
 
 Only PRG32 + ESP-IDF + Python/Pillow are needed to build the cartridges; the
@@ -47,7 +47,7 @@ riscv-prg32/
 mkdir -p riscv-prg32 && cd riscv-prg32
 git clone https://github.com/riscv-prg32/Galleria2007
 git clone https://github.com/riscv-prg32/PRG32
-git -C PRG32 checkout 687251f          # the release reference (or a newer main)
+git -C PRG32 checkout a8669e5          # the release reference (or a newer main)
 git clone https://github.com/riscv-prg32/CartridgeStore     # optional
 git clone https://github.com/riscv-prg32/PRG32-QT           # optional
 git clone https://github.com/riscv-prg32/PRG32-iOS          # optional
@@ -122,10 +122,10 @@ For each edition and target the script:
 Expected output (release 0.1.0):
 
 ```text
-dist/galleria2007-en-esp32c6.prg32: package 52969/65536, RAM 49664/65536, load ~42940/54500
-dist/galleria2007-en-qemu.prg32:    package 52967/65536, RAM 49664/65536, load ~42940/54500
-dist/galleria2007-it-esp32c6.prg32: package 53247/65536, RAM 49852/65536, load ~43128/54500
-dist/galleria2007-it-qemu.prg32:    package 53245/65536, RAM 49852/65536, load ~43128/54500
+dist/galleria2007-en-esp32c6.prg32: package 54616/65536, RAM 57568/65536, load ~44924/54500
+dist/galleria2007-en-qemu.prg32:    package 54614/65536, RAM 57568/65536, load ~44924/54500
+dist/galleria2007-it-esp32c6.prg32: package 54893/65536, RAM 57756/65536, load ~45112/54500
+dist/galleria2007-it-qemu.prg32:    package 54891/65536, RAM 57756/65536, load ~45112/54500
 ```
 
 Build a subset with `LANGS="it" scripts/build.sh qemu`.
@@ -142,8 +142,8 @@ STORE_PYTHON=~/.venvs/cartridgestore/bin/python scripts/pack-store-bundle.sh
 Expected:
 
 ```text
-esp32c6  galleria2007-it-esp32c6.prg32  53143 bytes (+12393 free) OK [store-ingest]
-qemu     galleria2007-it-qemu.prg32     53141 bytes (+12395 free) OK [store-ingest]
+esp32c6  galleria2007-it-esp32c6.prg32  54789 bytes (+10747 free) OK [store-ingest]
+qemu     galleria2007-it-qemu.prg32     54787 bytes (+10749 free) OK [store-ingest]
 galleria2007-it-0.1.0-store.zip: READY for submission (store-ingest)
 ```
 
@@ -179,8 +179,9 @@ scripts/check_hosts.sh
 
 The QEMU firmware must exist in `../PRG32/build-qemu` (`python3 -m prg32 qemu
 build` in the PRG32 checkout). At PRG32 `687251f` that build fails in
-`prg32_store.c` (`esp_crt_bundle.h` not found); a firmware built from an
-earlier commit with the same ABI hash (`0x260f6136`) works unchanged.
+`prg32_store.c` (`esp_crt_bundle.h` not found), and `a8669e5` does not touch
+that code; a firmware built from an earlier commit with the same ABI hash
+(`0x260f6136`) works unchanged.
 
 ### Interactive QEMU
 
@@ -204,7 +205,18 @@ python3 -m prg32 esp32c6 upload ../Galleria2007/dist/galleria2007-it-esp32c6.prg
 
 Record the results in [acceptance.md](acceptance.md).
 
-## 10. Screenshots and the 30-second preview
+## 10. Performance table
+
+```bash
+scripts/perf.sh
+```
+
+Builds six test-scene cartridges and prints instructions and modelled
+milliseconds per frame on the PRG32-QT ESP32-C6 profile (expected averages
+for this release: 12.3 ms per full-resolution frame, 7.2 ms per moving
+frame). See [performance.md](performance.md).
+
+## 11. Screenshots and the 30-second preview
 
 ```bash
 tests/run_tests.sh shots                          # build/shots/<lang>/*.png
