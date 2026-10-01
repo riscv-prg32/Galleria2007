@@ -114,6 +114,7 @@ static void test_solo_walkthrough(void) {
     start_game();
     CHECK(host_mp_joined);
     CHECK(host_blits >= 20);
+    CHECK(host_palette_sets > 0 && host_palette_sets % 224 == 0); /* 224 entries per init */
     /* Notebook and camera at the access. */
     CHECK(take(ITEM_NOTEBOOK));
     CHECK(take(ITEM_CAMERA));
@@ -300,7 +301,22 @@ static void test_stereo_positioning(void) {
     CHECK_EQ(host_notes, before);
 }
 
+/* A host without the multiplayer feature (PRG32-iOS) still plays solo and
+ * the cartridge never calls the multiplayer service. */
+static void test_host_without_multiplayer(void) {
+    host_features = PRG32_FEATURE_AUDIO | PRG32_FEATURE_AUDIO_PLUS | PRG32_FEATURE_SPRITES;
+    host_mp_joined = 0;
+    int frame_before = (int)host_local.frame;
+    start_game();
+    frames(60, PRG32_BTN_UP);
+    CHECK(!host_mp_joined);
+    CHECK_EQ((int)host_local.frame, frame_before);
+    CHECK_EQ(g_game.state, GS_PLAY);
+    host_features |= PRG32_FEATURE_MULTIPLAYER;
+}
+
 int main(void) {
+    test_host_without_multiplayer();
     test_stereo_positioning();
     test_solo_walkthrough();
     test_capture_and_recovery();

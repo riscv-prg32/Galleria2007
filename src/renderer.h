@@ -42,6 +42,21 @@ typedef struct {
     uint8_t size;         /* glow radius / dust size (cm / 2)             */
 } SpriteRef;
 
+/* 2D overlay composed into the same strips as the 3D view (HUD, panels,
+ * menus). Text uses the cartridge's own 8x8 font, so it looks identical on
+ * every PRG32 host (PRG32-QT/iOS draw prg32_gfx_text8 with a reduced font).
+ * Ops are collected each frame before render_frame(). */
+#define UI_MAX_OPS 64
+#define UI_TEXT_POOL 1536
+#define UI_TRANSPARENT 255   /* text background colour meaning "no box" */
+
+void render_ui_reset(void);
+void render_ui_rect(int x, int y, int w, int h, uint8_t color);
+/* Copies up to `len` characters (stops at NUL or newline). */
+void render_ui_text(int x, int y, const char *s, int len, uint8_t fg, uint8_t bg);
+/* Covers the whole view: the 3D scene is not rendered behind it. */
+void render_ui_fill(uint8_t color);
+
 extern uint16_t g_zbuf[G2007_SCREEN_W];
 extern uint16_t g_pal565[256];
 

@@ -1,12 +1,13 @@
 /*
- * User interface drawn over the 3D view with PRG32 text and rectangles.
- * The first-person view stays dominant: the play HUD is a tiny objective,
- * a torch icon and short-lived prompts. Colours are PRG32 system-palette
- * indices so they are identical on ILI9341 hardware and in QEMU.
+ * User interface: HUD, panels and screens, submitted as overlay ops that the
+ * renderer composes into its strips with the cartridge's own font (identical
+ * on the ESP32-C6 firmware, QEMU, PRG32-QT and PRG32-iOS; no host text or
+ * rectangle calls). The first-person view stays dominant: the play HUD is a
+ * tiny objective, a torch icon and short-lived prompts. Colours are the
+ * cartridge palette's system-cube indices (installed by render_init).
  */
 #include "game.h"
 #include "renderer.h"
-#include "platform.h"
 
 #define C_BLACK 16
 #define C_WHITE 1
@@ -19,7 +20,7 @@
 #define C_DANGER 52       /* (1,0,0) dark red */
 
 static void text(int x, int y, const char *s, uint8_t fg, uint8_t bg) {
-    prg32_gfx_text8(x, y, s, g_pal565[fg], g_pal565[bg]);
+    render_ui_text(x, y, s, 40, fg, bg);
 }
 
 static int text_len(const char *s) {
@@ -54,11 +55,11 @@ static int text_lines(int x, int y, const char *s, uint8_t fg, uint8_t bg, int c
 }
 
 static void panel(int x, int y, int w, int h) {
-    prg32_gfx_rect_indexed(x, y, w, h, C_BORDER);
-    prg32_gfx_rect_indexed(x + 2, y + 2, w - 4, h - 4, C_PANEL);
+    render_ui_rect(x, y, w, h, C_BORDER);
+    render_ui_rect(x + 2, y + 2, w - 4, h - 4, C_PANEL);
 }
 
-static void fill(uint8_t c) { prg32_gfx_rect_indexed(0, 0, G2007_SCREEN_W, G2007_SCREEN_H, c); }
+static void fill(uint8_t c) { render_ui_fill(c); }
 
 /* Append an unsigned decimal number. */
 static char *put_num(char *p, uint32_t v, int min_digits) {
@@ -90,12 +91,12 @@ static uint8_t objective(const Game *g) {
 
 static void torch_icon(const Game *g) {
     int x = 296, y = 4;
-    prg32_gfx_rect_indexed(x, y + 2, 10, 6, C_DIM);
-    prg32_gfx_rect_indexed(x + 10, y, 3, 10, C_DIM);
+    render_ui_rect(x, y + 2, 10, 6, C_DIM);
+    render_ui_rect(x + 10, y, 3, 10, C_DIM);
     if (g->player.light) {
         uint8_t c = g->player.boost_ticks ? C_WHITE : C_ACCENT;
-        prg32_gfx_rect_indexed(x + 13, y + 1, 2, 8, c);
-        prg32_gfx_rect_indexed(x + 15, y - 1, 3, 12, 221);
+        render_ui_rect(x + 13, y + 1, 2, 8, c);
+        render_ui_rect(x + 15, y - 1, 3, 12, 221);
     }
 }
 
@@ -112,9 +113,9 @@ static void draw_play_hud(Game *g) {
     if (g->wall_progress) {
         int w = (int)g->wall_progress * 120 / (4000 / G2007_TICK_MS);
         if (w > 120) w = 120;
-        prg32_gfx_rect_indexed(98, 158, 124, 8, C_BORDER);
-        prg32_gfx_rect_indexed(100, 160, 120, 4, C_BLACK);
-        prg32_gfx_rect_indexed(100, 160, w, 4, C_ACCENT);
+        render_ui_rect(98, 158, 124, 8, C_BORDER);
+        render_ui_rect(100, 160, 120, 4, C_BLACK);
+        render_ui_rect(100, 160, w, 4, C_ACCENT);
     }
     if (g->toast_ticks) {
         char buf[80];
@@ -218,6 +219,7 @@ static void draw_stats(Game *g) {
 }
 
 void ui_draw(Game *g) {
+    render_ui_reset();
     switch (g->state) {
     case GS_TITLE:
         panel(32, 40, 256, 120);
@@ -246,7 +248,7 @@ void ui_draw(Game *g) {
         draw_read(g);
         break;
     case GS_CAUGHT:
-        prg32_gfx_rect_indexed(0, 70, G2007_SCREEN_W, 60, C_DANGER);
+        render_ui_rect(0, 70, G2007_SCREEN_W, 60, C_DANGER);
         text_lines(0, 82, str(S_C_TEXT), C_WHITE, C_DANGER, 1);
         text_center(110, str(S_C_BACK), C_ACCENT, C_DANGER);
         break;

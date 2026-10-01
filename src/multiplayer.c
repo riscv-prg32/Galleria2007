@@ -3,7 +3,8 @@
  * protocol in net_proto.c. Local movement never waits for the network:
  * remote snapshots only update remote avatars and merge shared world state.
  * On QEMU the PRG32 offline stub accepts the join and reports no peers, so
- * the same code path runs solo.
+ * the same code path runs solo; on hosts without the multiplayer feature
+ * the game never calls the service.
  */
 #include "game.h"
 #include "net_proto.h"
@@ -20,7 +21,11 @@ void mp_init(void) {
     s_hold = 0;
     s_rr = 0;
     s_record = netp_world_record(0);
-    s_joined = (uint8_t)(prg32_multiplayer_join(G2007_NET_SIGNATURE, PRG32_MP_FLAG_ENABLE) == 0);
+    /* Multiplayer is an optional feature: hosts that do not advertise it
+     * (e.g. PRG32-iOS) get a complete solo game and no multiplayer calls. */
+    s_joined = 0;
+    if (g2007_host_features() & PRG32_FEATURE_MULTIPLAYER)
+        s_joined = (uint8_t)(prg32_multiplayer_join(G2007_NET_SIGNATURE, PRG32_MP_FLAG_ENABLE) == 0);
 }
 
 /* Changed items first (they matter most), then a round robin over the

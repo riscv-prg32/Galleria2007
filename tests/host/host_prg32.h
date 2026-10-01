@@ -6,7 +6,6 @@
 #define G2007_HOST_PRG32_H
 #include <stdio.h>
 #include <string.h>
-#include "font8.h"   /* generated from the PRG32 firmware font by tests/run_tests.sh */
 
 uint16_t host_fb[200][320];
 uint32_t host_ms = 1000;
@@ -24,17 +23,10 @@ uint32_t prg32_random_number(uint32_t min, uint32_t max) {
     host_rng = host_rng * 1103515245u + 12345u;
     return max <= min ? min : min + (host_rng >> 8) % (max - min + 1);
 }
+/* The cartridge composes its own text into the strips; these host calls
+ * exist only so that an accidental direct use would still link and show. */
 void prg32_gfx_text8(int x, int y, const char *s, uint16_t fg, uint16_t bg) {
-    for (; *s; ++s, x += 8) {
-        unsigned ch = (unsigned char)*s;
-        if (ch < 32 || ch > 126) ch = '?';
-        for (int r = 0; r < 8; ++r)
-            for (int c = 0; c < 8; ++c) {
-                int px = x + c, py = y + r;
-                if ((unsigned)px < 320 && (unsigned)py < 200)
-                    host_fb[py][px] = (g_font8[ch - 32][r] & (0x80 >> c)) ? fg : bg;
-            }
-    }
+    (void)x; (void)y; (void)s; (void)fg; (void)bg;
 }
 void prg32_gfx_rect_indexed(int x, int y, int w, int h, uint8_t index) {
     for (int py = y; py < y + h; ++py)
@@ -56,6 +48,10 @@ void prg32_audio_note(uint8_t ch, uint8_t ins, uint8_t note, uint8_t vol, uint32
     (void)ch; (void)ins; (void)note; (void)vol; (void)ms; ++host_notes;
 }
 void prg32_audio_note_off(uint8_t ch) { (void)ch; }
+int host_palette_sets;
+uint32_t host_features = PRG32_FEATURE_AUDIO | PRG32_FEATURE_AUDIO_PLUS | PRG32_FEATURE_MULTIPLAYER | PRG32_FEATURE_SPRITES;
+uint32_t g2007_host_features(void) { return host_features; }
+void prg32_palette_set(uint8_t index, uint16_t rgb565) { (void)index; (void)rgb565; ++host_palette_sets; }
 int host_stereo = 1, host_pan_calls, host_pan_left, host_pan_right, host_last_pan;
 prg32_audio_mode_t prg32_audio_get_mode(void) {
     return host_stereo ? PRG32_AUDIO_MODE_STEREO : PRG32_AUDIO_MODE_MONO;

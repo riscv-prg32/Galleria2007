@@ -813,6 +813,6 @@ void game_draw(void) {
             n = add_ref(refs, n, pt->x, pt->y, pt->sector,
                         pt->z - g_map_sectors[pt->sector].floor_z, 0, SK_DUST, 0, 4);
     }
+    ui_draw(g);                     /* overlay ops first, composed into the strips */
     render_frame(&cam, refs, n);
-    ui_draw(g);
 }

@@ -13,6 +13,7 @@
 #include "world.h"
 #include "platform.h"
 #include "gen/assets_data.h"
+#include "gen/font8.h"
 
 #define H G2007_HORIZON
 #define W G2007_SCREEN_W
@@ -44,6 +45,82 @@ typedef struct {
 static VisSprite g_vis[MAX_VISIBLE_SPRITES];
 static int g_vis_count;
 
+enum { OP_RECT = 0, OP_TEXT = 1 };
+typedef struct {
+    uint8_t kind, fg, bg, len;
+    int16_t x, y, w, h;
+    uint16_t text;        /* offset into g_ui_pool */
+} UiOp;
+
+static UiOp g_ui[UI_MAX_OPS];
+static int g_ui_count, g_ui_pool_used;
+static char g_ui_pool[UI_TEXT_POOL];
+static int16_t g_ui_fill = -1;
+
+void render_ui_reset(void) {
+    g_ui_count = 0;
+    g_ui_pool_used = 0;
+    g_ui_fill = -1;
+}
+
+void render_ui_fill(uint8_t color) { g_ui_fill = color; }
+
+void render_ui_rect(int x, int y, int w, int h, uint8_t color) {
+    if (g_ui_count >= UI_MAX_OPS || w <= 0 || h <= 0) return;
+    UiOp *op = &g_ui[g_ui_count++];
+    op->kind = OP_RECT;
+    op->fg = color;
+    op->x = (int16_t)x;
+    op->y = (int16_t)y;
+    op->w = (int16_t)w;
+    op->h = (int16_t)h;
+}
+
+void render_ui_text(int x, int y, const char *s, int len, uint8_t fg, uint8_t bg) {
+    int n = 0;
+    while (n < len && s[n] && s[n] != '\n') ++n;
+    if (!n || g_ui_count >= UI_MAX_OPS || g_ui_pool_used + n > UI_TEXT_POOL) return;
+    UiOp *op = &g_ui[g_ui_count++];
+    op->kind = OP_TEXT;
+    op->fg = fg;
+    op->bg = bg;
+    op->x = (int16_t)x;
+    op->y = (int16_t)y;
+    op->len = (uint8_t)(n > 255 ? 255 : n);
+    op->text = (uint16_t)g_ui_pool_used;
+    for (int i = 0; i < op->len; ++i) g_ui_pool[g_ui_pool_used++] = s[i];
+}
+
+/* Compose the overlay ops that intersect one strip, in submission order. */
+static void draw_ui_strip(int strip_x) {
+    int sx1 = strip_x + G2007_STRIP_W - 1;
+    for (int i = 0; i < g_ui_count; ++i) {
+        const UiOp *op = &g_ui[i];
+        if (op->kind == OP_RECT) {
+            int xa = fx_max(op->x, strip_x), xb = fx_min(op->x + op->w - 1, sx1);
+            int ya = fx_max(op->y, 0), yb = fx_min(op->y + op->h - 1, SH - 1);
+            for (int y = ya; y <= yb; ++y)
+                for (int x = xa; x <= xb; ++x) g_strip[y][x - strip_x] = op->fg;
+            continue;
+        }
+        int x0 = op->x, x1 = op->x + 8 * op->len - 1;
+        if (x1 < strip_x || x0 > sx1) continue;
+        int xa = fx_max(x0, strip_x), xb = fx_min(x1, sx1);
+        for (int x = xa; x <= xb; ++x) {
+            int cx = x - x0;
+            unsigned ch = (unsigned char)g_ui_pool[op->text + (cx >> 3)];
+            if (ch < 32 || ch > 126) ch = '?';
+            uint8_t bit = (uint8_t)(0x80u >> (cx & 7));
+            for (int r = 0; r < 8; ++r) {
+                int y = op->y + r;
+                if ((unsigned)y >= SH) continue;
+                if (g_ui_font[ch - 32][r] & bit) g_strip[y][x - strip_x] = op->fg;
+                else if (op->bg != UI_TRANSPARENT) g_strip[y][x - strip_x] = op->bg;
+            }
+        }
+    }
+}
+
 void render_init(void) {
     /* System palette as the ILI9341 driver understands it: it quantises an
      * RGB565 colour with component * 5 / max, so each cube level uses the
@@ -62,6 +139,15 @@ void render_init(void) {
             c = (uint16_t)((lv5[v / 36] << 11) | (lv6[(v / 6) % 6] << 5) | lv5[v % 6]);
         }
         g_pal565[i] = c;
+    }
+    /* Install the same colours in the host's indexed palette. Hosts differ
+     * in their *default* palette (the firmware uses a 6x6x6 cube, PRG32-QT an
+     * RGB332 ramp), so the cartridge never relies on it: after this, strips
+     * blitted with g_pal565 and rect_indexed() UI colours resolve to exactly
+     * these entries on the ESP32-C6, QEMU, PRG32-QT and PRG32-iOS alike.
+     * Entries 8..15 and 232..255 are left untouched (unused). */
+    for (int i = 0; i < 232; ++i) {
+        if (i < 8 || i >= 16) prg32_palette_set((uint8_t)i, g_pal565[i]);
     }
     g_strip_desc.pixels = &g_strip[0][0];
     g_strip_desc.palette = g_pal565;
@@ -336,16 +422,23 @@ void render_frame(const Camera *cam, const SpriteRef *refs, int count) {
     g_rgy = -g_dx;
     g_plx = (g_rgx * (W / 2)) / G2007_FOCAL;
     g_ply = (g_rgy * (W / 2)) / G2007_FOCAL;
-    prepare_sprites(refs, count);
+    if (g_ui_fill < 0) prepare_sprites(refs, count);
     for (int sx = 0; sx < W; sx += G2007_STRIP_W) {
-        for (int c = 0; c < G2007_STRIP_W; c += RENDER_X_STEP) {
-            render_column(sx + c, c);
+        if (g_ui_fill >= 0) {
+            /* Full-screen page: no 3D scene behind it. */
+            for (int y = 0; y < SH; ++y)
+                for (int c = 0; c < G2007_STRIP_W; ++c) g_strip[y][c] = (uint8_t)g_ui_fill;
+        } else {
+            for (int c = 0; c < G2007_STRIP_W; c += RENDER_X_STEP) {
+                render_column(sx + c, c);
 #if RENDER_X_STEP == 2
-            for (int y = 0; y < SH; ++y) g_strip[y][c + 1] = g_strip[y][c];
-            g_zbuf[sx + c + 1] = g_zbuf[sx + c];
+                for (int y = 0; y < SH; ++y) g_strip[y][c + 1] = g_strip[y][c];
+                g_zbuf[sx + c + 1] = g_zbuf[sx + c];
 #endif
+            }
+            draw_sprites_strip(sx);
         }
-        draw_sprites_strip(sx);
+        draw_ui_strip(sx);
         prg32_sprite_draw_indexed(sx, 0, &g_strip_desc, 0);
     }
 }
