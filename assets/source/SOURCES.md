@@ -96,11 +96,16 @@ Notes: no concept art; the screenshot is an actual gameplay frame.
 
 ```text
 ID: G2007-FONT
-Description: 8x8 text font.
-Source URL / owner: PRG32 firmware (https://github.com/riscv-prg32/PRG32)
-Rights/license: PRG32 license; not embedded in the cartridge (drawn by firmware)
-Used as: [ ] shipped — the cartridge calls prg32_gfx_text8()
-Notes: host tests copy it from the PRG32 checkout at test time only.
+Description: 8x8 text font, ASCII 32..126 (760 bytes, src/gen/font8.h).
+Source URL / owner: PRG32 firmware, components/prg32/prg32_display_qemu_rgb.c
+  (https://github.com/riscv-prg32/PRG32)
+Retrieved: 2026-10-01 (PRG32 main 687251f) by tools/build_font.py
+Author/credit: PRG32 contributors
+Rights/license: MIT (PRG32)
+Used as: [x] redistributed original
+Permission status: MIT license, attribution kept here and in the colophon
+Notes: embedded so text renders identically on PRG32-QT/iOS, whose
+  prg32_gfx_text8 uses a reduced 5x7 font.
 ```
 
 ## External sources consulted

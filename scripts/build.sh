@@ -74,9 +74,19 @@ for lang in "${langs[@]}"; do
       echo "#define G2007_LANG_$LANG_UP 1"
       echo "#include \"$repo_dir/src/galleria2007.c\""
     } > "$wrapper"
+    # Prove position independence (no relocations: hosts load anywhere).
+    PRG32_REPO="$prg32_repo" python3 "$repo_dir/tools/check_relocatable.py" "$wrapper" | tail -1
     log="$build_dir/$name-$arch.build.log"
+    # Portable across hosts: only indexed sprites are *required* (every host
+    # provides them); multiplayer and (stereo) audio are *optional*, because
+    # PRG32-iOS does not offer multiplayer and rejects cartridges requiring
+    # it. The game checks the host's advertised features at run time.
     prg32 cartridge build "$wrapper" \
-      --portable --multiplayer \
+      --portable \
+      --required-feature sprites \
+      --optional-feature multiplayer \
+      --optional-feature audio \
+      --optional-feature audio_plus \
       --entry-prefix galleria2007 \
       --name "$name" \
       --architecture "$arch" \

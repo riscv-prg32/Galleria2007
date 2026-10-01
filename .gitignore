@@ -58,6 +58,9 @@ dkms.conf
 build/
 __pycache__/
 .DS_Store
-tests/host/font8.h
 dist/*.raw.prg32
 dist/store-bundle-*/
+
+# Swift build output of the iOS headless runner
+tools/ios-headless/.build/
+tools/ios-headless/Package.resolved
