@@ -1,0 +1,54 @@
+{
+  "abi": "prg32-metadata-1.0",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "Raffaele Montella",
+      "affiliation": "UniParthenope"
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/riscv-prg32/Galleria2007",
+  "repository": "https://github.com/riscv-prg32/Galleria2007",
+  "created_at": "2026-10-01T00:00:00Z",
+  "updated_at": "2026-10-01T00:00:00Z",
+  "runtime": {
+    "platform": "PRG32",
+    "isa": "RV32IMC",
+    "architectures": [
+      {
+        "id": "esp32c6",
+        "label": "ESP32-C6 hardware",
+        "target": "esp32c6",
+        "display": "ili9341",
+        "isa": "RV32IMC"
+      },
+      {
+        "id": "qemu",
+        "label": "QEMU virtual screen",
+        "target": "esp32c3",
+        "display": "qemu-rgb",
+        "isa": "RV32IMC"
+      }
+    ]
+  },
+  "multiplayer": true,
+  "multiplayer_signature": "galleria2007-v1",
+  "players": "1-4",
+  "id": "org.riscv-prg32.galleria2007.en",
+  "title": "Galleria 2007 (English)",
+  "language": "en",
+  "summary": "Explore Naples' Galleria Borbonica in 2007 in a retro 3D adventure for PRG32.",
+  "description": "A first-person, Doom-like archaeological adventure set in Naples' Galleria Borbonica during its 2007 rediscovery. Explore tuff tunnels, cisterns, the vehicle deposit and the air-raid shelter; record clues in your notebook, manage a five-slot backpack, open the walled-up passage and reach the 75 steps of the pozzari while evading the Lamp Man. One to four players cooperate or compete in the same shared world, together with players of the Italian edition. The Galleria's history is real; the mystery and the antagonist are game fiction, and the map is a provisional reconstruction, not a survey.",
+  "tags": [
+    "game",
+    "adventure",
+    "3d",
+    "doom-like",
+    "education",
+    "history",
+    "naples",
+    "multiplayer",
+    "english"
+  ]
+}

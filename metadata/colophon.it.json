@@ -1,0 +1,54 @@
+{
+  "abi": "prg32-colophon-1.0",
+  "title": "Galleria 2007",
+  "subtitle": "La scoperta è solo l'inizio",
+  "version": "0.1.0",
+  "release_date": "2026-10-01",
+  "developer": {
+    "name": "UniParthenope PRG32",
+    "url": "https://github.com/riscv-prg32/Galleria2007"
+  },
+  "authors": [
+    {
+      "role": "concept, academic supervisor / project lead",
+      "name": "Raffaele Montella - UniParthenope"
+    },
+    {
+      "role": "implementation, procedural art and original music",
+      "name": "Claude Code (Anthropic)"
+    }
+  ],
+  "license": "MIT",
+  "copyright": "Copyright 2026 PRG32",
+  "acknowledgements": [
+    "Ispirato alla storia pubblica della Galleria Borbonica di Napoli (galleriaborbonica.com, consultato il 2026-10-01).",
+    "Nessuna collaborazione istituzionale: nome e storia del sito sono citati a scopo descrittivo ed educativo.",
+    "Mappa provvisoria e topologica, non un rilievo. Texture e sprite procedurali originali: nessuna fotografia inclusa.",
+    "Colonna sonora originale; non cita né imita temi di film o serie.",
+    "Framework PRG32 e font 8x8 del firmware PRG32."
+  ],
+  "content_notice": "Storia reale, mistero inventato: l'Uomo della Lampada e le sue tracce sono finzione. Nessuna violenza.",
+  "controls": [
+    {
+      "input": "SU / GIU'",
+      "action": "Avanti / indietro"
+    },
+    {
+      "input": "SINISTRA / DESTRA",
+      "action": "Ruota"
+    },
+    {
+      "input": "A",
+      "action": "Esamina, prendi, usa, registra (tieni premuto per forzare)"
+    },
+    {
+      "input": "B",
+      "action": "Torcia accesa/spenta"
+    },
+    {
+      "input": "A+B (o START)",
+      "action": "Zaino e archivio"
+    }
+  ],
+  "start_prompt": "Premi A per scendere nella galleria"
+}

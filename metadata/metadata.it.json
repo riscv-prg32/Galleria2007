@@ -1,0 +1,54 @@
+{
+  "abi": "prg32-metadata-1.0",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "Raffaele Montella",
+      "affiliation": "UniParthenope"
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/riscv-prg32/Galleria2007",
+  "repository": "https://github.com/riscv-prg32/Galleria2007",
+  "created_at": "2026-10-01T00:00:00Z",
+  "updated_at": "2026-10-01T00:00:00Z",
+  "runtime": {
+    "platform": "PRG32",
+    "isa": "RV32IMC",
+    "architectures": [
+      {
+        "id": "esp32c6",
+        "label": "ESP32-C6 hardware",
+        "target": "esp32c6",
+        "display": "ili9341",
+        "isa": "RV32IMC"
+      },
+      {
+        "id": "qemu",
+        "label": "QEMU virtual screen",
+        "target": "esp32c3",
+        "display": "qemu-rgb",
+        "isa": "RV32IMC"
+      }
+    ]
+  },
+  "multiplayer": true,
+  "multiplayer_signature": "galleria2007-v1",
+  "players": "1-4",
+  "id": "org.riscv-prg32.galleria2007",
+  "title": "Galleria 2007",
+  "language": "it",
+  "summary": "Esplora la Galleria Borbonica nel 2007 in un'avventura 3D retro per PRG32.",
+  "description": "Un'avventura archeologica in prima persona, in stile Doom, ambientata nella Galleria Borbonica di Napoli durante la fase di riscoperta del 2007. Esplora gallerie di tufo, cisterne, il deposito dei veicoli e il ricovero antiaereo; registra le tracce nel taccuino, gestisci uno zaino da cinque posti, apri il passaggio murato e raggiungi i 75 gradini dei pozzari, sfuggendo all'Uomo della Lampada. Da uno a quattro giocatori possono collaborare o competere nello stesso mondo condiviso. La storia della Galleria è reale; il mistero e l'antagonista sono invenzioni del gioco, e la mappa è una ricostruzione provvisoria, non un rilievo.",
+  "tags": [
+    "game",
+    "adventure",
+    "3d",
+    "doom-like",
+    "education",
+    "history",
+    "naples",
+    "multiplayer",
+    "italiano"
+  ]
+}

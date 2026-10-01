@@ -1,0 +1,54 @@
+{
+  "abi": "prg32-colophon-1.0",
+  "title": "Galleria 2007",
+  "subtitle": "Discovery is only the beginning",
+  "version": "0.1.0",
+  "release_date": "2026-10-01",
+  "developer": {
+    "name": "UniParthenope PRG32",
+    "url": "https://github.com/riscv-prg32/Galleria2007"
+  },
+  "authors": [
+    {
+      "role": "concept, academic supervisor / project lead",
+      "name": "Raffaele Montella - UniParthenope"
+    },
+    {
+      "role": "implementation, procedural art and original music",
+      "name": "Claude Code (Anthropic)"
+    }
+  ],
+  "license": "MIT",
+  "copyright": "Copyright 2026 PRG32",
+  "acknowledgements": [
+    "Inspired by the public history of Naples' Galleria Borbonica (galleriaborbonica.com, accessed 2026-10-01).",
+    "No institutional partnership: the site's name and history are cited descriptively and for education.",
+    "Provisional topological map, not a survey. Original procedural textures and sprites: no photographs included.",
+    "Original soundtrack; it does not quote or imitate any film or series theme.",
+    "PRG32 framework and the PRG32 firmware 8x8 font."
+  ],
+  "content_notice": "Real history, invented mystery: the Lamp Man and his traces are fiction. No violence.",
+  "controls": [
+    {
+      "input": "UP / DOWN",
+      "action": "Walk forward / back"
+    },
+    {
+      "input": "LEFT / RIGHT",
+      "action": "Turn"
+    },
+    {
+      "input": "A",
+      "action": "Examine, take, use, record (hold to force)"
+    },
+    {
+      "input": "B",
+      "action": "Torch on/off"
+    },
+    {
+      "input": "A+B (or START)",
+      "action": "Backpack and archive"
+    }
+  ],
+  "start_prompt": "Press A to descend into the tunnel"
+}

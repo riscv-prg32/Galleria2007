@@ -53,3 +53,11 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Galleria 2007 build intermediates
+build/
+__pycache__/
+.DS_Store
+tests/host/font8.h
+dist/*.raw.prg32
+dist/store-bundle-*/
